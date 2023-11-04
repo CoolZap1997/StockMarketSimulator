@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Add Stock</title>
+    <style>
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 10% auto; /* Center the modal vertically and give some top margin */
+            padding: 20px;
+            border: 1px solid #888;
+            width: 70%; /* Set a specific width for the modal content */
+            max-width: 400px; /* Limit the maximum width */
+            margin: 10% auto; /* Center the modal both horizontally and vertically */
+        }
+    
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .fade-out {
+            opacity: 0;
+            transition: opacity 1s ease-out;
+        }
+    </style>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+
+    <div class="container mt-5">
+        
+        <div id="errorDiv" class="alert alert-danger" role="alert">
+            {% if errorMsg %}{{ errorMsg }}{% endif %}
+        </div>
+        
+        <div id="successDiv" class="alert alert-success" role="alert">
+            {% if successMsg %}{{ successMsg }}{% endif %}
+        </div>
+
+        
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <h2 class="text-center">Add Stock</h2>
+                <!-- Add Stock Form -->
+                <form method="post" action="{% url 'add_stock' %}" class="needs-validation" novalidate>
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label for="stock_name">Stock Name:</label>
+                        <input type="text" class="form-control" id="stock_name" name="stock_name" required>
+                        <div class="invalid-feedback">
+                            Please enter a stock name.
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Add Stock</button>
+                </form>
+    
+                <h2 class="text-center mt-5">Stocks</h2>
+                <!-- Stocks Table -->
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Stock Name</th>
+                            <th>Stock Price</th>
+                            <th>Invest</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for stock in stocks %}
+                        <tr>
+                            <td>{{ stock.stock_name }}</td>
+                            <td>{{ stock.stock_price|default:'-' }}</td>
+                            <td><button class="btn btn-primary" id="stock-{{ stock.id }}" onclick="invest('{{ stock.id }}')">Invest</button></td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="3">No stocks available</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+    
+                <h2 class="text-center mt-5">Investments</h2>
+                <!-- Investments Table -->
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Stock Name</th>
+                            <th>Stock Price</th>
+                            <th>Number of Stocks</th>
+                            <th>Total Investment</th>
+                            <th>Current Value</th>
+                            <th>Percentage Difference</th>
+                            <th>XIRR</th>
+                            <th>Withdraw</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for investment in investments %}
+                        <tr>
+                            <td>{{ investment.stock.stock_name }}</td>
+                            <td>{{ investment.cost_price|default:'-' }}</td>
+                            <td>{{ investment.number_of_stocks }}</td>
+                            <td>{{ investment.investment_value }}</td>
+                            <td>{{ investment.current_value }}</td>
+                            <td style="color: {% if investment.percentage_difference == 0 %}grey{% elif investment.percentage_difference > 0 %}green{% else %}red{% endif %};">{{ investment.percentage_difference|floatformat:2 }}%</td>
+                            <td style="color: {% if investment.xirr == 0 %}grey{% elif investment.xirr > 0 %}green{% else %}red{% endif %};">{{ investment.xirr|floatformat:2 }}%</td>
+                            <td><button class="btn btn-danger" id="invest-{{ investment.id }}" onclick="openWithdrawModal('{{ investment.id }}', '{{ investment.number_of_stocks }}')">Withdraw</button></td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5">No investments available</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div id="investModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeInvestModal()">&times;</span>
+            <h2>Invest Stocks</h2>
+            <label for="numberOfStocks">Number of Stocks:</label>
+            <input type="number" id="numberOfStocks" required><br><br>
+            <button class="btn btn-success" id="invest" onclick="getAndInvestStock('{{ stock.id }}')">Invest</button>
+        </div>
+    </div>
+
+    <div id="withdrawModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeWithdrawModal()">&times;</span>
+            <h2>Withdraw Stocks</h2>
+            <label for="withdrawNumberOfStocks">Number of Stocks:</label>
+            <input type="number" id="withdrawNumberOfStocks" required><br><br>
+            <button class="btn btn-success" id="withdraw" onclick="getAndWithdrawStock('{{ stock.id }}')">Withdraw</button>
+        </div>
+    </div>
+
+    <script>
+        function invest(stockId) {
+            // Display the modal dialog
+            var modal = document.getElementById('investModal');
+            modal.style.display = 'block';
+            
+            // Get the number of stocks to invest from the user
+            var investButton = document.getElementById("invest-" + stockId);
+            var invest = document.getElementById("invest");
+
+            // Check if the button element exists in the DOM
+            if (invest) {
+                // Replace the onclick value with a dynamic function call
+                invest.onclick = function() {
+                    getAndInvestStock(stockId);
+                };
+            }
+            investButton.onclick = function() {
+                var numberOfStocks = document.getElementById('numberOfStocks').value;
+                // Perform invest logic here (for example, show an alert with the total investment amount)
+                alert('Investing ' + numberOfStocks + ' stocks for Stock ID: ' + stockId);
+                // Close the modal dialog
+                modal.style.display = 'none';
+            };
+        }
+
+        function getAndInvestStock(stockId) {
+            console.log(stockId)
+            // Get the value of number of stocks from the input tag
+            var numberOfStocks = document.getElementById("numberOfStocks").value;
+            
+            // Check if the input value is not null or empty
+            if (numberOfStocks !== null && numberOfStocks !== "") {
+                // Call the investStock function with stockId and numberOfStocks as parameters
+                investStock(stockId, numberOfStocks);
+            } else {
+                // Show an alert if the input is not a valid positive number
+                alert("Please enter a valid positive number.");
+            }
+        }
+
+        function investStock(stockId, numberOfStocks) { 
+            if (numberOfStocks === null || numberOfStocks === "") {
+                return;
+            }
+            console.log("Let's see")
+            console.log(stockId)
+            // Make an AJAX request to the Django view
+            $.ajax({
+                url: '/invest/add_investment/',  // Replace with the actual URL of your Django view
+                type: 'POST',
+                data: {
+                    stock_id: stockId,
+                    number_of_stocks: numberOfStocks,
+                    csrfmiddlewaretoken: '{{ csrf_token }}'
+                },
+                success: function(data, textStatus, xhr) {
+                    if (xhr.status === 201) {
+                        // Investment successful, display success message and fade out after 6 seconds
+                        
+                        $('#errorDiv').removeClass('fade-out').hide();
+                        $('#successDiv').text('Investment successful!').show();
+                        setTimeout(function() {
+                            $('#successDiv').addClass('fade-out').hide();
+                            window.location.href = "/invest/add_stock/"
+                        }, 6000);  // Hide after 6 seconds (6000 milliseconds)
+                        console.log("Invested Again!!");
+                        closeInvestModal();
+                    }
+                },
+                error: function(xhr) {
+                    if (xhr.status === 400) {
+                        // Error occurred, display error message and fade out after 6 seconds
+                        $('#successDiv').removeClass('fade-out').hide();
+                        $('#errorDiv').text('Could not invest. Some error occurred.').show();
+                        setTimeout(function() {
+                            $('#errorDiv').addClass('fade-out').hide();
+                        }, 6000);  // Hide after 6 seconds (6000 milliseconds)
+                    }
+                }
+            });
+        }
+
+        // Function to close the modal when the close button is clicked
+        function closeInvestModal() {
+            var modal = document.getElementById('investModal');
+            modal.style.display = 'none';
+        }
+
+        document.addEventListener("DOMContentLoaded", function() {
+            var errorDiv = document.getElementById("errorDiv");
+            errorDiv.style.display = "none";
+            var successDiv = document.getElementById("successDiv");
+            successDiv.style.display = "none";
+        });
+
+        function openWithdrawModal(investmentId, no_of_stocks) {
+            var withdrawModal = document.getElementById("withdrawModal");
+            withdrawModal.style.display = "block";
+
+            var investButton = document.getElementById("invest-" + investmentId);
+            var withdraw = document.getElementById("withdraw");
+            var withdrawNumberOfStocksInput = document.getElementById("withdrawNumberOfStocks");
+            withdrawNumberOfStocksInput.min = 0;
+            withdrawNumberOfStocksInput.max = no_of_stocks;
+
+            // Check if the button element exists in the DOM
+            if (withdraw) {
+                // Replace the onclick value with a dynamic function call
+                withdraw.onclick = function() {
+                    getAndWithdrawStock(investmentId, no_of_stocks);
+                };
+            }
+        }
+
+        // Function to get and withdraw stocks
+        function getAndWithdrawStock(investmentId, no_of_stocks) {
+            // Get the value of number of stocks from the input tag
+            var numberOfStocks = document.getElementById("withdrawNumberOfStocks").value;
+
+            // Check if the input value is not null or empty
+            if (numberOfStocks > parseInt(no_of_stocks)){
+                alert("Please enter a value less than or equal to " + no_of_stocks);
+            }
+            if (numberOfStocks !== null && numberOfStocks !== "") {
+                // Call the investStock function with stockId and numberOfStocks as parameters
+                withdrawStock(investmentId, numberOfStocks);
+            } else {
+                // Show an alert if the input is not a valid positive number
+                alert("Please enter a valid positive number.");
+            }
+        }
+
+        // Function to withdraw stocks
+        function withdrawStock(investmentId) {
+            var numberOfStocks = document.getElementById("withdrawNumberOfStocks").value;
+            if (numberOfStocks === null || numberOfStocks === "") {
+                return;
+            }
+            console.log("Let's see")
+            console.log(investmentId)
+            
+            // Make an AJAX request to the Django view
+            $.ajax({
+                url: '/invest/withdraw_investment/',  // Replace with the actual URL of your Django view
+                type: 'POST',
+                data: {
+                    investmentId: investmentId,
+                    number_of_stocks: numberOfStocks,
+                    csrfmiddlewaretoken: '{{ csrf_token }}'
+                },
+                success: function(data, textStatus, xhr) {
+                    if (xhr.status === 201) {
+                        // Investment successful, display success message and fade out after 6 seconds
+                        
+                        $('#errorDiv').removeClass('fade-out').hide();
+                        $('#successDiv').text('Investment successful!').show();
+                        setTimeout(function() {
+                            $('#successDiv').addClass('fade-out').hide();
+                            window.location.href = "/invest/add_stock/"
+                        }, 1000);  // Hide after 1 second (1000 milliseconds)
+                        console.log("Invested Again!!");
+                        closeInvestModal();
+                    }
+                },
+                error: function(xhr) {
+                    if (xhr.status === 400) {
+                        // Error occurred, display error message and fade out after 6 seconds
+                        $('#successDiv').removeClass('fade-out').hide();
+                        $('#errorDiv').text('Could not invest. Some error occurred.').show();
+                        setTimeout(function() {
+                            $('#errorDiv').addClass('fade-out').hide();
+                        }, 6000);  // Hide after 6 seconds (6000 milliseconds)
+                    }
+                }
+            });
+
+        }
+
+        // Function to close the withdraw modal
+        function closeWithdrawModal() {
+            var withdrawModal = document.getElementById("withdrawModal");
+            withdrawModal.style.display = "none";
+        }
+        
+    </script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>
