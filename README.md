@@ -14,7 +14,7 @@ The Stock Market Simulation App is a Django-based web application that allows us
   - **XIRR**: Calculates the extended internal rate of return for the investment over time.
 - **Withdrawal Functionality**: Users can withdraw their investments with a confirmation prompt.
 
-Installation
+## Installation
 
 mkdir stock_simulator
 git clone https://github.com/CoolZap1997/StockMarketSimulator.git
