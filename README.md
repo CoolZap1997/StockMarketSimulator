@@ -16,12 +16,12 @@ The Stock Market Simulation App is a Django-based web application that allows us
 
 ## Installation
 
-mkdir stock_simulator
-git clone https://github.com/CoolZap1997/StockMarketSimulator.git
-python manage.py makemigrations
-python manage.py migrate
-python manage.py createsuperuser
-python manage.py runserver
+- mkdir stock_simulator
+- git clone https://github.com/CoolZap1997/StockMarketSimulator.git
+- python manage.py makemigrations
+- python manage.py migrate
+- python manage.py createsuperuser
+- python manage.py runserver
 
 Enjoy investing in the virtual risk free stock market
 
