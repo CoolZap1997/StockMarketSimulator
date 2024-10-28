@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portfolio</title>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+    <div class="container mt-5">
+        <h1>Your Portfolio</h1>
+        <p class="lead">Welcome, {{ user.username }}! Here’s your investment portfolio:</p>
+        <div class="mb-3">
+            <a href="{% url 'add_stock' %}" class="btn btn-success">Add Stock</a>
+            <!-- Logout Form -->
+            <form action="{% url 'logout' %}" method="post" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger">Logout</button>
+            </form>
+        </div>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Stock Name</th>
+                    <th>Buy Price</th>
+                    <th>No. of Stocks</th>
+                    <th>Total Investment</th>
+                    <th>Current Value</th>
+                    <th>Percentage Difference</th>
+                    <th>XIRR</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for holding in portfolio %}
+                    <tr>
+                        <td>{{ holding.stock.name }}</td>
+                        <td>₹ {{ holding.buy_price }}</td>
+                        <td>{{ holding.quantity }}</td>
+                        <td>₹ {{ holding.investment_value }}</td>
+                        <td>₹ {{ holding.current_value }}</td>
+                        <td style="color: {% if holding.percentage_difference > 0 %}green{% elif holding.percentage_difference < 0 %}red{% else %}black{% endif %};">
+                            {{ holding.percentage_difference|floatformat:2 }}%
+                        </td>
+                        <td style="color: {% if holding.xirr > 0 %}green{% elif holding.xirr < 0 %}red{% else %}black{% endif %};">
+                            {{ holding.xirr|floatformat:2 }}%
+                        </td>
+                        <td>
+                            <form action="{% url 'withdraw_stock' holding.id %}" method="post" onsubmit="return confirmWithdraw('{{ holding.stock.name }}');">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-danger btn-sm">Withdraw</button>
+                            </form>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+            <script>
+                function confirmWithdraw(stockName) {
+                    return confirm(`Are you sure you want to withdraw from ${stockName}?`);
+                }
+            </script>
+        </table>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

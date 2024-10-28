@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create User</title>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .register-container {
+            max-width: 500px;
+            padding: 2rem;
+        }
+        .register-card {
+            min-height: 400px;
+        }
+        .logo {
+            width: 100px;
+            height: 100px;
+        }
+    </style>
+</head>
+<body class="bg-light">
+    <div class="container d-flex align-items-center justify-content-center" style="min-height: 100vh;">
+        <div class="register-container text-center">
+            <img src="https://via.placeholder.com/100" alt="Logo" class="logo mb-3">
+            <h1 class="mb-4">Create Account</h1>
+            <div class="card register-card">
+                <div class="card-header">
+                    <h2>Sign Up</h2>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        <table class="table table-borderless">
+                            <tr>
+                                <td>{{ form.username.label_tag }}</td>
+                                <td>{{ form.username }}</td>
+                            </tr>
+                            <tr>
+                                <td>{{ form.password1.label_tag }}</td>
+                                <td>{{ form.password1 }}</td>
+                            </tr>
+                            <tr>
+                                <td>{{ form.password2.label_tag }}</td>
+                                <td>{{ form.password2 }}</td>
+                            </tr>
+                        </table>
+                        <button type="submit" class="btn btn-primary btn-block">Create Account</button>
+                    </form>
+                    <p class="mt-3">
+                        Already have an account? <a href="{% url 'login' %}">Login here</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
