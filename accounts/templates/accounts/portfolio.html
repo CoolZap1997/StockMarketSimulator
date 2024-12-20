@@ -11,9 +11,12 @@
         <h1>Your Portfolio</h1>
         <p class="lead">Welcome, {{ user.username }}! Here’s your investment portfolio:</p>
         <div class="mb-3">
-            <a href="{% url 'add_stock' %}" class="btn btn-success">Add Stock</a>
-            <!-- Logout Form -->
-            <form action="{% url 'logout' %}" method="post" style="display:inline;">
+            <a href="{% url 'accounts:add_stock' %}" class="btn btn-success">Add Stock</a>
+            <form action="{% url 'accounts:refresh_prices' %}" method="post" style="display: inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-info">Refresh</button>
+            </form>
+            <form action="{% url 'accounts:logout' %}" method="post" style="display:inline;">
                 {% csrf_token %}
                 <button type="submit" class="btn btn-danger">Logout</button>
             </form>
@@ -21,8 +24,9 @@
         <table class="table">
             <thead>
                 <tr>
+                    <th>Stock Code</th>
                     <th>Stock Name</th>
-                    <th>Buy Price</th>
+                    <th style="min-width: 100px;">Buy Price</th>
                     <th>No. of Stocks</th>
                     <th>Total Investment</th>
                     <th>Current Value</th>
@@ -35,6 +39,7 @@
                 {% for holding in portfolio %}
                     <tr>
                         <td>{{ holding.stock.name }}</td>
+                        <td>{{ holding.stock.company_name }}</td>
                         <td>₹ {{ holding.buy_price }}</td>
                         <td>{{ holding.quantity }}</td>
                         <td>₹ {{ holding.investment_value }}</td>
@@ -46,7 +51,7 @@
                             {{ holding.xirr|floatformat:2 }}%
                         </td>
                         <td>
-                            <form action="{% url 'withdraw_stock' holding.id %}" method="post" onsubmit="return confirmWithdraw('{{ holding.stock.name }}');">
+                            <form action="{% url 'accounts:withdraw_stock' holding.id %}" method="post" onsubmit="return confirmWithdraw('{{ holding.stock.name }}');">
                                 {% csrf_token %}
                                 <button type="submit" class="btn btn-danger btn-sm">Withdraw</button>
                             </form>

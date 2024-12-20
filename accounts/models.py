@@ -6,6 +6,7 @@ from decimal import Decimal
 class Stock(models.Model):
     """Stores basic information about each stock."""
     name = models.CharField(max_length=100, unique=True)
+    company_name = models.CharField(max_length=100, unique=True)
 
     def __str__(self):
         return self.name
@@ -24,17 +25,14 @@ class PortfolioStock(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     stock = models.ForeignKey(Stock, on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField()
-    buy_price = models.DecimalField(max_digits=10, decimal_places=2) 
+    buy_price = models.DecimalField(max_digits=10, decimal_places=2)
     created_at = models.DateField(default=timezone.now)
 
     def investment_value(self):
-        print(self.stock)
         return self.buy_price * self.quantity
 
     def current_value(self):
-        print(self.stock)
         current_stock = CurrentStockValue.objects.get(stock=self.stock)
-        print(current_stock.current_price)
         return current_stock.current_price * self.quantity
 
 
@@ -43,30 +41,23 @@ class PortfolioStock(models.Model):
         if self.current_value() and self.investment_value():
             return ((self.current_value() - self.investment_value()) / self.investment_value()) * 100
         return 0
-    
+
     def xirr(self):
         investment_date = self.created_at
         investment_amount = self.investment_value()
         current_value = self.current_value()
-        
-        current_date = timezone.now()
-        print("\n\n\n\n", investment_date)
-        print("\n\n\n\n", type(investment_date.date()))
 
-        print("\n\n\n\n", current_date)
-        print("\n\n\n\n", type(current_date))
-        days = (current_date.date() - investment_date.date()).days
+        current_date = timezone.now()
+        days = (current_date.date() - investment_date).days
 
         if days < 0:
             raise ValueError("The investment date must be in the past.")
-        
+
         if days == 0:
             return 0
         days_decimal = Decimal(days)
         xirr_value = ((Decimal(current_value) / Decimal(investment_amount)) ** (Decimal(365) / days_decimal) - Decimal(1)) * Decimal(100)
 
-        # xirr_value = ((current_value / investment_amount) ** (365 / days) - 1) * 100
-        print("\n\n\n\n", xirr_value)
         return xirr_value
 
     def __str__(self):

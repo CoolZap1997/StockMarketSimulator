@@ -1,3 +1,5 @@
+{% load static %}
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -22,7 +24,7 @@
 <body class="bg-light">
     <div class="container d-flex align-items-center justify-content-center" style="min-height: 100vh;">
         <div class="register-container text-center">
-            <img src="https://via.placeholder.com/100" alt="Logo" class="logo mb-3">
+            <img src="{% static 'accounts/logo.png' %}" alt="Logo" class="logo mb-3">
             <h1 class="mb-4">Create Account</h1>
             <div class="card register-card">
                 <div class="card-header">
@@ -48,7 +50,7 @@
                         <button type="submit" class="btn btn-primary btn-block">Create Account</button>
                     </form>
                     <p class="mt-3">
-                        Already have an account? <a href="{% url 'login' %}">Login here</a>
+                        Already have an account? <a href="{% url 'accounts:login' %}">Login here</a>
                     </p>
                 </div>
             </div>

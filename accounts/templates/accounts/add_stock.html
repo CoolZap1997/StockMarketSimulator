@@ -13,9 +13,9 @@
         <form method="post">
             {% csrf_token %}
             <div class="form-group">
-                <label for="stock_name">Stock Symbol(for NSE)/ Stock Number(for BSE):</label>
+                <label for="stock_code">Stock Symbol(for NSE)/ Stock Number(for BSE):</label>
                 <div class="input-group">
-                    <input type="text" id="stock_name" name="stock_name" class="form-control" required>
+                    <input type="text" id="stock_code" name="stock_code" class="form-control" required>
                     <div class="input-group-append">
                         <button type="button" id="check_price" class="btn btn-info">Check Price</button>
                     </div>
@@ -30,14 +30,14 @@
                 <input type="number" id="quantity" name="quantity" class="form-control" required>
             </div>
             <button type="submit" class="btn btn-primary">Add Stock</button>
-            <a href="{% url 'portfolio' %}" class="btn btn-link">Back to Portfolio</a>
+            <a href="{% url 'accounts:portfolio' %}" class="btn btn-link">Back to Portfolio</a>
         </form>
     </div>
 
     <script>
         $(document).ready(function() {
             $('#check_price').click(function() {
-                const stockName = $('#stock_name').val();
+                const stockName = $('#stock_code').val();
 
                 $.ajax({
                     url: `/accounts/get_stock_price?name=${stockName}`,

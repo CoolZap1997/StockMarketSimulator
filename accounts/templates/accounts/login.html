@@ -24,7 +24,6 @@
 <body class="bg-light">
     <div class="container d-flex align-items-center justify-content-center" style="min-height: 100vh;">
         <div class="login-container text-center">
-            <!-- <img src="https://via.placeholder.com/100" alt="Logo" class="logo mb-3"> -->
             <img src="{% static 'accounts/logo.png' %}" alt="Logo" class="logo mb-3">
 
             <h1 class="mb-4">Stock Market Simulator</h1>
@@ -48,7 +47,7 @@
                         <button type="submit" class="btn btn-primary btn-block">Login</button>
                     </form>
                     <p class="mt-3">
-                        Don’t have an account? <a href="{% url 'register' %}">Create User</a>
+                        Don’t have an account? <a href="{% url 'accounts:register' %}">Create User</a>
                     </p>
                 </div>
             </div>
